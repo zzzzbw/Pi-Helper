@@ -1,35 +1,30 @@
 package cn.zzzzbw.pi.helper.controller;
 
-import cn.zzzzbw.pi.helper.entity.Order;
-import cn.zzzzbw.pi.helper.service.PiService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import cn.zzzzbw.pi.helper.service.CommandService;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author by ZHANGBOWEN469
- * @since 2020/06/17 20:58
+ * @since 2020/06/30 15:11
  */
 @RestController
 @RequestMapping("pi")
 public class PiController {
 
-    @Autowired
-    private PiService piService;
+    private final CommandService commandService;
 
-    @GetMapping("order")
-    public Order getOrder() {
-        return piService.getOrder();
+    public PiController(CommandService commandService) {
+        this.commandService = commandService;
     }
 
-    @GetMapping("shutdown")
-    public void toShutdown() {
-        piService.toShutdown();
+
+    @GetMapping("/command/push")
+    public String commandPush() {
+        return commandService.push();
     }
 
-    @GetMapping("reboot")
-    public void toReboot() {
-        piService.toReboot();
+    @PutMapping("command/executed/{id}")
+    public void commandExecuted(@PathVariable long id){
+        commandService.executed(id);
     }
 }
