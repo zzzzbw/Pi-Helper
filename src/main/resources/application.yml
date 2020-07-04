@@ -8,3 +8,6 @@ server:
   servlet:
     encoding:
       force: true
+
+pi:
+  security-key: 123456

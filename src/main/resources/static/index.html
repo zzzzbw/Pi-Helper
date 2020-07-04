@@ -2,118 +2,118 @@
 <html>
 <head>
     <title>Pi Command Manage</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
-    <script src="https://unpkg.com/vue"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
 
     <style>
-        .container {
-            margin: 50px auto 100px auto;
-        }
-
-        .table {
-            width: 100%;
-        }
-
-        .notification {
-            margin: 1rem auto;
-        }
-
-        .modal-card-body {
-            border-top-left-radius: 6px;
-            border-top-right-radius: 6px;
-        }
-
-        .modal-card {
-            max-width: 460px;
-            width: auto;
-            min-width: 320px;
-        }
-
-        .modal-card-foot {
-            justify-content: flex-end;
-        }
     </style>
 </head>
 <body>
 <div id="app">
-    <div class="container">
-        <div>
-            <div class="notification is-primary" v-show="notification.show">
-                <button class="delete" @click="closeNotification"></button>
-                <span>{{notification.msg}}</span>
-            </div>
-        </div>
+    <v-app>
+        <v-main>
+            <v-container>
+                <v-alert v-model="alert.show" :type="alert.type" :dismissible="true" dense>
+                    {{alert.msg}}
+                </v-alert>
 
-        <div class="field has-addons">
-            <div class="control is-expanded">
-                <input class="input is-rounded" type="text" placeholder="Text command..." v-model="command">
-            </div>
-            <div class="control">
-                <button class="button is-info is-rounded" @click="submitCommand">
-                    Submit
-                </button>
-            </div>
-        </div>
-        <div class="box">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th style="width: 51px;">Id</th>
-                    <th>Content</th>
-                    <th style="width: 140px;">Status</th>
-                    <th style="width: 51px;"></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="command in commandData">
-                    <th>{{command.id}}</th>
-                    <td>{{command.content}}</td>
-                    <td><span class="tag" v-bind:class="{'is-dark': command.status == 'UN_READ',
-                                                     'is-info': command.status == 'ACCEPT',
-                                                     'is-success': command.status == 'EXECUTED'}">
-                    {{command.status}}
-                </span></td>
-                    <td><a class="delete" @click="handleDelete(command.id)"></a></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+                <v-row>
+                    <v-col cols="23">
+                        <v-text-field dense placeholder="Text command here..." outlined
+                                      v-model="command"></v-text-field>
+                    </v-col>
 
-        <div class="modal" v-bind:class="{'is-active': modal.show}">
-            <div class="modal-background"></div>
-            <div class="modal-card">
-                <section class="modal-card-body">
-                    <div><p>Are you sure you want to do this?</p></div>
-                </section>
-                <footer class="modal-card-foot">
-                    <button class="button" @click="closeModal">
-                        Cancel
-                    </button>
-                    <button class="button is-danger" @click="modal.fuc()">
-                        Confirm
-                    </button>
-                </footer>
-            </div>
-        </div>
-    </div>
+                    <v-col cols="1">
+                        <v-btn color="primary" @click="submitCommand">
+                            Submit
+                        </v-btn>
+                    </v-col>
+                </v-row>
+
+                <v-data-table
+                        :headers="commandHeaders"
+                        :items="commandData"
+                        :items-per-page="5"
+                        class="elevation-1"
+                >
+                    <template v-slot:item.status="{ item }">
+                        <v-chip :color="getStatusColor(item.status)" small>{{ item.status }}</v-chip>
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+                        <v-icon small @click="handleDelete(item.id)"
+                        >
+                            mdi-delete
+                        </v-icon>
+                    </template>
+                </v-data-table>
+
+                <v-dialog v-model="dialog.show" persistent max-width="400">
+                    <v-card>
+                        <v-card-title class="headline">Are you sure you want to do this?</v-card-title>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="green darken-1" text @click="closeDialog">Cancel</v-btn>
+                            <v-btn color="green darken-1" text @click="dialog.fuc()">Confirm</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+            </v-container>
+            <v-dialog :value='true' persistent max-width="400">
+                <v-card>
+                    <v-card-title class="deep-purple darken-1 white--text">
+                        Login
+                    </v-card-title>
+                    <v-card-text class="pt-4">
+                        <v-text-field v-model="security.key" dense placeholder="Enter Key..." outlined
+                                      autofocus :error="security.error"
+                                      :error-messages="security.errorMsg"></v-text-field>
+                        <v-btn color="primary" @click="submitLogin">
+                            Enter
+                        </v-btn>
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
+        </v-main>
+    </v-app>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="js/httpUtils.js"></script>
 <script>
+
     const HOST = 'http://localhost:8080/';
-    const PAGE_URL = HOST + 'panel/command';
-    const CREATE_URL = HOST + 'panel/command';
+    const LOGIN_URL = 'panel/login';
+    const PAGE_URL = 'panel/command';
+    const CREATE_URL = 'panel/command';
+    const DEL_URL = 'panel/command';
+    const https = new HttpUtils(HOST);
 
     const app = new Vue({
         el: '#app',
+        vuetify: new Vuetify(),
         data: {
-            commandData: {},
-            notification: {
-                show: false,
-                msg: ''
+            security: {
+                key: '',
+                error: false,
+                errorMsg: ''
             },
+            commandHeaders: [
+                {text: 'Id', value: 'id'},
+                {text: 'Content', value: 'content'},
+                {text: 'Status', value: 'status'},
+                {value: 'actions'}
+            ],
+            commandData: [],
             command: '',
-            modal: {
+            alert: {
+                show: false,
+                msg: '',
+                type: 'info'
+            },
+            dialog: {
                 show: false,
                 fuc: function () {
                 }
@@ -121,51 +121,89 @@
         },
         methods: {
             init: function () {
-                axios.get(PAGE_URL, {
-                    params: {
-                        page: 0,
-                        size: 10
-                    }
+                https.get(PAGE_URL, {
+                    params: {page: 0, size: 10}
                 }).then(function (response) {
-                    console.log(response)
-                    app.commandData = response.data.content;
+                    app.commandData = response.content;
                 }).catch(function (error) {
-                    console.log(error);
-                    app.showNotification(error)
+                    app.showAlert(error).error()
                 });
             },
-            closeNotification: function () {
-                this.notification.show = false;
-                this.notification.msg = '';
+            submitLogin: function () {
+                if (this.security.key === '') {
+                    this.security.error = true
+                    this.security.errorMsg = 'Key 不能为空'
+                    return
+                }
+                https.post(LOGIN_URL, {
+                    key: app.security.key
+                }).then(function (response) {
+                    console.log(response)
+                }).catch(function (error) {
+                    app.security.error = true
+                    app.security.errorMsg = https.err(error)
+                })
             },
             submitCommand: function () {
                 if (this.command === '') {
-                    app.showNotification('输入命令不能为空')
+                    app.showAlert('输入命令不能为空').error()
                     return
                 }
 
-                axios.post(CREATE_URL, {
+                https.post(CREATE_URL, {
                     params: {
                         command: app.command
                     }
                 }).then(function (response) {
-                    console.log(response)
                     app.init()
                 }).catch(function (error) {
-                    console.log(error)
-                    app.showNotification(error)
+                    app.showAlert(error).error()
                 });
             },
+            deleteCommand(id) {
+                https.del(DEL_URL + '/' + id)
+                    .then(function () {
+                        app.showAlert('删除成功').success()
+                        app.init();
+                    }).catch(function (error) {
+                    app.showAlert(error).error()
+                })
+                app.closeDialog()
+            },
             handleDelete: function (id) {
-                console.log(id)
-                this.modal.show = true
+                this.dialog.show = true
+                this.dialog.fuc = function () {
+                    app.deleteCommand(id)
+                }
             },
-            showNotification: function (msg) {
-                app.notification.show = true;
-                app.notification.msg = msg;
+            getStatusColor(status) {
+                switch (status) {
+                    case 'UN_READ':
+                        return 'info'
+                    case 'ACCEPT':
+                        return 'primary'
+                    case 'EXECUTED':
+                        return 'success'
+                }
             },
-            closeModal() {
-                this.modal = {
+            showAlert: function (msg) {
+                app.alert.show = true;
+                app.alert.msg = msg;
+                return {
+                    success: function () {
+                        app.alert.type = 'success'
+                    },
+                    error: function () {
+                        app.alert.type = 'error'
+                    }
+                }
+            },
+            closeAlert: function () {
+                this.alert.show = false;
+                this.alert.msg = '';
+            },
+            closeDialog() {
+                this.dialog = {
                     show: false,
                     fuc: function () {
                     }
